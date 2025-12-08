@@ -59,6 +59,11 @@ class SANSFitter:
         self.fit_result = None
         self._fitted_model = None
         
+        # Structure factor support
+        self._structure_factor_name = None
+        self._radius_effective_mode = 'unconstrained'
+        self._form_factor_params = {}  # Store form factor params separately
+        
     def load_data(self, filename: str) -> None:
         """
         Load SANS data from a file.
@@ -96,6 +101,8 @@ class SANSFitter:
         """
         Set the SANS model to use for fitting.
         
+        This resets any active structure factor to ensure a clean state.
+        
         Args:
             model_name: Name of the model from SasModels (e.g., 'cylinder', 'sphere')
             platform: Computation platform ('cpu' or 'opencl')
@@ -104,6 +111,11 @@ class SANSFitter:
             ValueError: If the model name is not valid
         """
         try:
+            # Reset structure factor when changing form factor
+            self._structure_factor_name = None
+            self._radius_effective_mode = 'unconstrained'
+            self._form_factor_params = {}
+            
             # Force CPU platform to avoid OpenCL issues
             self.kernel = load_model(model_name, dtype='single', platform='dll')
             self.model_name = model_name
@@ -153,12 +165,19 @@ class SANSFitter:
         
         print(f"\n{'='*80}")
         print(f"Model: {self.model_name}")
+        if self._structure_factor_name:
+            print(f"Structure Factor: {self._structure_factor_name}")
+            print(f"Radius Effective Mode: {self._radius_effective_mode}")
         print(f"{'='*80}")
         print(f"{'Parameter':<20} {'Value':<12} {'Min':<12} {'Max':<12} {'Vary':<8}")
         print(f"{'-'*80}")
         
         for name, info in self.params.items():
             vary_str = "✓" if info['vary'] else "✗"
+            # Show linked indicator for radius_effective in link_radius mode
+            if (name == 'radius_effective' and 
+                self._radius_effective_mode == 'link_radius'):
+                vary_str = "→radius"
             print(f"{name:<20} {info['value']:<12.4g} {info['min']:<12.4g} "
                   f"{info['max']:<12.4g} {vary_str:<8}")
         print(f"{'='*80}\n")
@@ -185,12 +204,171 @@ class SANSFitter:
         
         if value is not None:
             self.params[name]['value'] = value
+            # Sync radius_effective when radius is updated in link_radius mode
+            if (name == 'radius' and 
+                self._radius_effective_mode == 'link_radius' and
+                'radius_effective' in self.params):
+                self.params['radius_effective']['value'] = value
         if min is not None:
             self.params[name]['min'] = min
         if max is not None:
             self.params[name]['max'] = max
         if vary is not None:
             self.params[name]['vary'] = vary
+    
+    def set_structure_factor(self, structure_factor_name: str,
+                              radius_effective_mode: str = 'unconstrained') -> None:
+        """
+        Apply a structure factor to the current model.
+        
+        This creates a product model (form_factor * structure_factor) to account
+        for inter-particle interactions in concentrated systems.
+        
+        Supported structure factors:
+        - 'hardsphere': Hard sphere structure factor (Percus-Yevick closure)
+        - 'hayter_msa': Hayter-Penfold rescaled MSA for charged spheres
+        - 'squarewell': Square well potential
+        - 'stickyhardsphere': Sticky hard sphere (Baxter model)
+        
+        Args:
+            structure_factor_name: Name of the structure factor (e.g., 'hardsphere')
+            radius_effective_mode: How to handle the effective radius.
+                - 'unconstrained': 'radius_effective' is a separate fitting parameter.
+                - 'link_radius': 'radius_effective' is constrained to the form factor's 'radius'.
+                
+        Raises:
+            ValueError: If no form factor model is set, or if the structure factor is invalid
+        """
+        if self.kernel is None or self.model_name is None:
+            raise ValueError("No form factor model loaded. Use set_model() first.")
+        
+        # Validate structure factor name
+        supported_sf = ['hardsphere', 'hayter_msa', 'squarewell', 'stickyhardsphere']
+        if structure_factor_name not in supported_sf:
+            raise ValueError(
+                f"Unsupported structure factor '{structure_factor_name}'. "
+                f"Supported: {', '.join(supported_sf)}"
+            )
+        
+        # Validate radius_effective_mode
+        if radius_effective_mode not in ['unconstrained', 'link_radius']:
+            raise ValueError(
+                f"Invalid radius_effective_mode '{radius_effective_mode}'. "
+                "Use 'unconstrained' or 'link_radius'."
+            )
+        
+        # Store form factor parameters before switching to product model
+        if not self._form_factor_params:
+            self._form_factor_params = {k: dict(v) for k, v in self.params.items()}
+        
+        # Create product model name
+        full_model_name = f"{self.model_name}@{structure_factor_name}"
+        
+        try:
+            # Load the product model
+            self.kernel = load_model(full_model_name, dtype='single', platform='dll')
+            self._structure_factor_name = structure_factor_name
+            self._radius_effective_mode = radius_effective_mode
+            
+            # Rebuild parameters from product model
+            new_params = {}
+            for param in self.kernel.info.parameters.kernel_parameters:
+                # Preserve existing values if parameter already exists
+                if param.name in self._form_factor_params:
+                    new_params[param.name] = dict(self._form_factor_params[param.name])
+                else:
+                    new_params[param.name] = {
+                        'value': param.default,
+                        'min': param.limits[0] if param.limits[0] > -np.inf else 0,
+                        'max': param.limits[1] if param.limits[1] < np.inf else param.default * 10,
+                        'vary': False,
+                        'description': param.description
+                    }
+            
+            # Ensure scale and background are present
+            if 'scale' not in new_params:
+                if 'scale' in self._form_factor_params:
+                    new_params['scale'] = dict(self._form_factor_params['scale'])
+                else:
+                    new_params['scale'] = {
+                        'value': 1.0,
+                        'min': 0.0,
+                        'max': np.inf,
+                        'vary': False,
+                        'description': 'Scale factor for the model intensity'
+                    }
+            
+            if 'background' not in new_params:
+                if 'background' in self._form_factor_params:
+                    new_params['background'] = dict(self._form_factor_params['background'])
+                else:
+                    new_params['background'] = {
+                        'value': 0.0,
+                        'min': 0.0,
+                        'max': np.inf,
+                        'vary': False,
+                        'description': 'Constant background level'
+                    }
+            
+            self.params = new_params
+            
+            # Handle radius_effective linking
+            if radius_effective_mode == 'link_radius':
+                if 'radius' in self.params and 'radius_effective' in self.params:
+                    # Link radius_effective to radius
+                    self.params['radius_effective']['value'] = self.params['radius']['value']
+                    self.params['radius_effective']['vary'] = False
+                    print(f"  Note: 'radius_effective' linked to 'radius' value")
+                else:
+                    warnings.warn(
+                        "Cannot link radius_effective to radius: one or both parameters not found. "
+                        "Using unconstrained mode."
+                    )
+                    self._radius_effective_mode = 'unconstrained'
+            
+            print(f"✓ Structure factor '{structure_factor_name}' applied to '{self.model_name}'")
+            print(f"  Product model: {full_model_name}")
+            print(f"  Total parameters: {len(self.params)}")
+            
+        except Exception as e:
+            raise ValueError(f"Failed to load product model '{full_model_name}': {str(e)}")
+    
+    def remove_structure_factor(self) -> None:
+        """
+        Remove the current structure factor and revert to the form factor only.
+        
+        Raises:
+            ValueError: If no structure factor is currently set
+        """
+        if self._structure_factor_name is None:
+            raise ValueError("No structure factor is currently set.")
+        
+        # Reload the original form factor model
+        try:
+            self.kernel = load_model(self.model_name, dtype='single', platform='dll')
+            
+            # Restore form factor parameters
+            self.params = {k: dict(v) for k, v in self._form_factor_params.items()}
+            
+            sf_name = self._structure_factor_name
+            self._structure_factor_name = None
+            self._radius_effective_mode = 'unconstrained'
+            self._form_factor_params = {}
+            
+            print(f"✓ Structure factor '{sf_name}' removed")
+            print(f"  Reverted to form factor: {self.model_name}")
+            
+        except Exception as e:
+            raise ValueError(f"Failed to reload form factor model: {str(e)}")
+    
+    def get_structure_factor(self) -> Optional[str]:
+        """
+        Get the name of the currently applied structure factor.
+        
+        Returns:
+            Name of the structure factor, or None if no structure factor is set
+        """
+        return self._structure_factor_name
     
     def fit(self, engine: Literal['bumps', 'lmfit'] = 'bumps', 
             method: Optional[str] = None, **kwargs) -> Dict[str, Any]:
@@ -237,6 +415,12 @@ class SANSFitter:
             if info['vary']:
                 param_obj = getattr(model, name)
                 param_obj.range(info['min'], info['max'])
+        
+        # Handle radius_effective linking in link_radius mode
+        if (self._radius_effective_mode == 'link_radius' and
+            hasattr(model, 'radius_effective') and hasattr(model, 'radius')):
+            # Constrain radius_effective to equal radius
+            model.radius_effective = model.radius
         
         # Create experiment and fit problem
         experiment = Experiment(data=self.data, model=model)
@@ -291,6 +475,9 @@ class SANSFitter:
         # Create direct model calculator (kernel already set to CPU in set_model)
         calculator = DirectModel(self.data, self.kernel)
         
+        # Capture instance attributes for use in residual closure
+        radius_effective_mode = self._radius_effective_mode
+        
         # Define residual function
         def residual(x):
             # Build full parameter dictionary
@@ -298,6 +485,12 @@ class SANSFitter:
             # Update with fitted parameters
             for i, name in enumerate(param_names):
                 par_dict[name] = x[i]
+            
+            # Handle radius_effective linking in link_radius mode
+            if (radius_effective_mode == 'link_radius' and
+                'radius' in par_dict and 'radius_effective' in par_dict):
+                par_dict['radius_effective'] = par_dict['radius']
+            
             # Calculate model
             I_calc = calculator(**par_dict)
             # Return weighted residuals
