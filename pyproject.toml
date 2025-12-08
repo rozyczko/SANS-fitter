@@ -51,7 +51,7 @@ jupyter = ">=1.0"
 [tool.pixi.tasks]
 test = "pytest tests/ -v"
 test-verbose = "pytest tests/ -vv"
-test-coverage = "pytest tests/ --cov=. --cov-report=html --cov-report=term"
+test-coverage = "pytest tests/ --cov=. --cov-report=html --cov-report=term --cov-report=xml"
 test-quick = "pytest tests/ -v -x"
 run-demo = "jupyter notebook notebooks/sans_fitter_demo.ipynb"
 

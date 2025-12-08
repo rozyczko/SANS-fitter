@@ -1,5 +1,7 @@
 # SANS Model Fitter
 
+[![codecov](https://codecov.io/gh/rozyczko/SANS-fitter/graph/badge.svg)](https://codecov.io/gh/rozyczko/SANS-fitter)
+
 A flexible, model-agnostic Python template for fitting Small-Angle Neutron Scattering (SANS) data using the SasModels library.
 
 ## Features
