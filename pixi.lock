@@ -7913,7 +7913,7 @@ packages:
 - pypi: ./
   name: sans-fitter
   version: 0.1.0
-  sha256: 9b92ae46d0a047765c9bfadbb476587429d78c21899f36358cd00cfec4d816cb
+  sha256: 8448bb55e7ac36db7b9348f80c9937b7378fbbdd45d7fb90bc5e5dec35ac5220
   requires_dist:
   - numpy>=1.20
   - matplotlib>=3.5
