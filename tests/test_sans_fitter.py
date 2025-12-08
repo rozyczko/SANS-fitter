@@ -325,9 +325,6 @@ class TestLMFitFitting(unittest.TestCase):
         temp_file.close()
         return temp_file.name
     
-    @unittest.skipIf(not hasattr(sys.modules.get('sans_fitter', {}), 'LMFIT_AVAILABLE') or 
-                     not getattr(sys.modules.get('sans_fitter'), 'LMFIT_AVAILABLE', False),
-                     "lmfit not available")
     def test_lmfit_fit_runs(self):
         """Test that LMFit fit executes without error."""
         try:
@@ -343,9 +340,6 @@ class TestLMFitFitting(unittest.TestCase):
                 self.skipTest("lmfit not installed")
             raise
     
-    @unittest.skipIf(not hasattr(sys.modules.get('sans_fitter', {}), 'LMFIT_AVAILABLE') or 
-                     not getattr(sys.modules.get('sans_fitter'), 'LMFIT_AVAILABLE', False),
-                     "lmfit not available")
     def test_lmfit_fit_returns_parameters(self):
         """Test that LMFit fit returns fitted parameters."""
         try:
