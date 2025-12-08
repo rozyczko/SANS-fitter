@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sans-fitter"
+version = "0.1.0"
+description = "A flexible template for fitting SANS data with SasModels"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.20",
+    "matplotlib>=3.5",
+    "scipy>=1.7",
+    "sasmodels>=1.0",
+    "sasdata>=0.8",
+    "bumps>=0.9",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+sans-fitter = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+python = ">=3.9,<3.13"
+numpy = ">=1.20"
+matplotlib = ">=3.5"
+scipy = ">=1.7"
+sasmodels = ">=1.0"
+bumps = ">=0.9"
+pytest = ">=7.0"
+pytest-cov = ">=4.0"
+
+[tool.pixi.tasks]
+test = "pytest tests/ -v"
+test-verbose = "pytest tests/ -vv"
+test-coverage = "pytest tests/ --cov=. --cov-report=html --cov-report=term"
+test-quick = "pytest tests/ -v -x"
+run-demo = "jupyter notebook notebooks/sans_fitter_demo.ipynb"
+
+[tool.pytest.ini_options]
+# Pytest configuration for SANS Fitter tests
+
+# Test discovery
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output options
+addopts = [
+    "-v",                          # Verbose output
+    "--tb=short",                  # Shorter traceback format
+    "--strict-markers",            # Strict marker usage
+    "-ra",                         # Show summary of all test outcomes
+    "--disable-warnings",          # Disable warnings display
+]
+
+# Markers
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Coverage options (if pytest-cov is installed)
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
