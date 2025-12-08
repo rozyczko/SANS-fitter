@@ -11,11 +11,37 @@ A flexible, model-agnostic Python template for fitting Small-Angle Neutron Scatt
 - **Comprehensive Visualization**: Automatic plotting of data, fitted model, and residuals
 - **Result Export**: Save fitted parameters and curves to CSV files
 
-## Installation Requirements
+## Installation
+
+### Option 1: Using pip (recommended for users)
 
 ```bash
-pip install sasmodels sasdata bumps numpy matplotlib
-pip install lmfit  # Optional, for LMFit engine
+# Clone the repository
+git clone https://github.com/rozyczko/SANS-fitter.git
+cd SANS-fitter
+
+# Install the package
+pip install -e .
+
+# Or install with development dependencies
+pip install -e ".[dev]"
+```
+
+### Option 2: Using Pixi (recommended for development)
+
+```bash
+# Clone the repository
+git clone https://github.com/rozyczko/SANS-fitter.git
+cd SANS-fitter
+
+# Install dependencies with Pixi
+pixi install
+
+# Run tests
+pixi run test
+
+# Run demo notebook
+pixi run run-demo
 ```
 
 ## Quick Start
@@ -170,7 +196,35 @@ This allows the fitter to work with any model without prior knowledge of its par
 
 ## License
 
-This is a template/example implementation. Adapt as needed for your research.
+BSD 3-Clause License
+
+Copyright (c) 2025, SANS-fitter contributors
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## References
 
