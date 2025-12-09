@@ -48,12 +48,12 @@ class TestDataLoading(unittest.TestCase):
     def create_test_data_file(self):
         """Create a temporary CSV data file for testing."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
         for i in range(10):
             q = 0.01 * (i + 1)
             intensity = 100 * np.exp(-q * 10) + 0.1
             error = intensity * 0.1
-            temp_file.write(f"{q},{intensity},{error}\n")
+            temp_file.write(f'{q},{intensity},{error}\n')
         temp_file.close()
         return temp_file.name
 
@@ -237,7 +237,7 @@ class TestBumpsFitting(unittest.TestCase):
     def create_test_data_file(self):
         """Create synthetic SANS data for a sphere."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
 
         # Generate synthetic sphere scattering data
         q = np.logspace(-2, 0, 30)
@@ -246,7 +246,7 @@ class TestBumpsFitting(unittest.TestCase):
         d_intensity = intensity * 0.1
 
         for qi, intensity_i, d_intensity_i in zip(q, intensity, d_intensity):
-            temp_file.write(f"{qi},{intensity_i},{d_intensity_i}\n")
+            temp_file.write(f'{qi},{intensity_i},{d_intensity_i}\n')
         temp_file.close()
         return temp_file.name
 
@@ -315,14 +315,14 @@ class TestLMFitFitting(unittest.TestCase):
     def create_test_data_file(self):
         """Create synthetic SANS data for a sphere."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
 
         q = np.logspace(-2, 0, 30)
         intensity = 0.1 * (1 / (1 + q**2)) + 0.01
         d_intensity = intensity * 0.1
 
         for qi, intensity_i, d_intensity_i in zip(q, intensity, d_intensity):
-            temp_file.write(f"{qi},{intensity_i},{d_intensity_i}\n")
+            temp_file.write(f'{qi},{intensity_i},{d_intensity_i}\n')
         temp_file.close()
         return temp_file.name
 
@@ -338,7 +338,7 @@ class TestLMFitFitting(unittest.TestCase):
             self.assertIn('parameters', result)
         except ValueError as e:
             if 'lmfit is not installed' in str(e):
-                self.skipTest("lmfit not installed")
+                self.skipTest('lmfit not installed')
             raise
 
     def test_lmfit_fit_returns_parameters(self):
@@ -357,7 +357,7 @@ class TestLMFitFitting(unittest.TestCase):
                 self.assertIn('formatted', param_result)
         except ValueError as e:
             if 'lmfit is not installed' in str(e):
-                self.skipTest("lmfit not installed")
+                self.skipTest('lmfit not installed')
             raise
 
 
@@ -378,12 +378,12 @@ class TestVisualization(unittest.TestCase):
     def create_test_data_file(self):
         """Create synthetic SANS data."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
         q = np.logspace(-2, 0, 20)
         intensity = 0.1 * (1 / (1 + q**2)) + 0.01
         d_intensity = intensity * 0.1
         for qi, intensity_i, d_intensity_i in zip(q, intensity, d_intensity):
-            temp_file.write(f"{qi},{intensity_i},{d_intensity_i}\n")
+            temp_file.write(f'{qi},{intensity_i},{d_intensity_i}\n')
         temp_file.close()
         return temp_file.name
 
@@ -442,12 +442,12 @@ class TestResultExport(unittest.TestCase):
     def create_test_data_file(self):
         """Create synthetic SANS data."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
         q = np.logspace(-2, 0, 20)
         intensity = 0.1 * (1 / (1 + q**2)) + 0.01
         d_intensity = intensity * 0.1
         for qi, intensity_i, d_intensity_i in zip(q, intensity, d_intensity):
-            temp_file.write(f"{qi},{intensity_i},{d_intensity_i}\n")
+            temp_file.write(f'{qi},{intensity_i},{d_intensity_i}\n')
         temp_file.close()
         return temp_file.name
 
@@ -540,12 +540,12 @@ class TestIntegration(unittest.TestCase):
     def create_test_data_file(self):
         """Create synthetic SANS data."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
         q = np.logspace(-2, 0, 20)
         intensity = 0.1 * (1 / (1 + q**2)) + 0.01
         d_intensity = intensity * 0.1
         for qi, intensity_i, d_intensity_i in zip(q, intensity, d_intensity):
-            temp_file.write(f"{qi},{intensity_i},{d_intensity_i}\n")
+            temp_file.write(f'{qi},{intensity_i},{d_intensity_i}\n')
         temp_file.close()
         return temp_file.name
 
@@ -743,16 +743,18 @@ class TestStructureFactorFitting(unittest.TestCase):
     def create_test_data_file(self):
         """Create synthetic SANS data for concentrated spheres."""
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-        temp_file.write("Q,I,dI\n")
+        temp_file.write('Q,I,dI\n')
 
         q = np.logspace(-2, 0, 30)
         # Approximate concentrated sphere scattering
-        intensity = 0.01 * (1 / (1 + (q * 50)**2)) * (1 - 0.2 * np.sin(q * 100) / (q * 100 + 1e-10))
+        intensity = (
+            0.01 * (1 / (1 + (q * 50) ** 2)) * (1 - 0.2 * np.sin(q * 100) / (q * 100 + 1e-10))
+        )
         intensity = np.maximum(intensity, 0.001)
         d_intensity = intensity * 0.1
 
         for qi, intensity_i, d_intensity_i in zip(q, intensity, d_intensity):
-            temp_file.write(f"{qi},{intensity_i},{d_intensity_i}\n")
+            temp_file.write(f'{qi},{intensity_i},{d_intensity_i}\n')
         temp_file.close()
         return temp_file.name
 
@@ -792,7 +794,7 @@ class TestStructureFactorFitting(unittest.TestCase):
             self.assertIn('radius_effective', result['parameters'])
         except ValueError as e:
             if 'scipy is not installed' in str(e):
-                self.skipTest("scipy not installed")
+                self.skipTest('scipy not installed')
             raise
 
 

@@ -25,10 +25,11 @@ from sasmodels.direct_model import DirectModel
 
 try:
     from scipy.optimize import differential_evolution, least_squares, leastsq
+
     LMFIT_AVAILABLE = True
 except ImportError:
     LMFIT_AVAILABLE = False
-    warnings.warn("scipy not available. Only bumps engine will work.", stacklevel=2)
+    warnings.warn('scipy not available. Only bumps engine will work.', stacklevel=2)
 
 
 class SANSFitter:
@@ -82,7 +83,7 @@ class SANSFitter:
         try:
             data_list = loader.load(filename)
             if not data_list:
-                raise ValueError(f"No data loaded from {filename}")
+                raise ValueError(f'No data loaded from {filename}')
 
             self.data = data_list[0]
 
@@ -91,12 +92,12 @@ class SANSFitter:
             self.data.qmax = getattr(self.data, 'qmax', None) or self.data.x.max()
             self.data.mask = np.isnan(self.data.y)
 
-            print(f"✓ Loaded data from {filename}")
-            print(f"  Q range: {self.data.qmin:.4f} to {self.data.qmax:.4f} Å⁻¹")
-            print(f"  Data points: {len(self.data.x)}")
+            print(f'✓ Loaded data from {filename}')
+            print(f'  Q range: {self.data.qmin:.4f} to {self.data.qmax:.4f} Å⁻¹')
+            print(f'  Data points: {len(self.data.x)}')
 
         except Exception as e:
-            raise ValueError(f"Failed to load data from {filename}: {str(e)}") from e
+            raise ValueError(f'Failed to load data from {filename}: {str(e)}') from e
 
     def set_model(self, model_name: str, platform: str = 'cpu') -> None:
         """
@@ -129,7 +130,7 @@ class SANSFitter:
                     'min': param.limits[0] if param.limits[0] > -np.inf else 0,
                     'max': param.limits[1] if param.limits[1] < np.inf else param.default * 10,
                     'vary': False,  # By default, parameters are fixed
-                    'description': param.description
+                    'description': param.description,
                 }
 
             # Add implicit scale and background parameters (present in all models)
@@ -140,7 +141,7 @@ class SANSFitter:
                     'min': 0.0,
                     'max': np.inf,
                     'vary': False,
-                    'description': 'Scale factor for the model intensity'
+                    'description': 'Scale factor for the model intensity',
                 }
 
             if 'background' not in self.params:
@@ -149,11 +150,11 @@ class SANSFitter:
                     'min': 0.0,
                     'max': np.inf,
                     'vary': False,
-                    'description': 'Constant background level'
+                    'description': 'Constant background level',
                 }
 
             print(f"✓ Model '{model_name}' loaded successfully")
-            print(f"  Available parameters: {len(self.params)}")
+            print(f'  Available parameters: {len(self.params)}')
 
         except Exception as e:
             raise ValueError(f"Failed to load model '{model_name}': {str(e)}") from e
@@ -161,31 +162,37 @@ class SANSFitter:
     def get_params(self) -> None:
         """Display current parameter values and settings in a readable format."""
         if not self.params:
-            print("No model loaded. Use set_model() first.")
+            print('No model loaded. Use set_model() first.')
             return
 
-        print(f"\n{'='*80}")
-        print(f"Model: {self.model_name}")
+        print(f'\n{"=" * 80}')
+        print(f'Model: {self.model_name}')
         if self._structure_factor_name:
-            print(f"Structure Factor: {self._structure_factor_name}")
-            print(f"Radius Effective Mode: {self._radius_effective_mode}")
-        print(f"{'='*80}")
-        print(f"{'Parameter':<20} {'Value':<12} {'Min':<12} {'Max':<12} {'Vary':<8}")
-        print(f"{'-'*80}")
+            print(f'Structure Factor: {self._structure_factor_name}')
+            print(f'Radius Effective Mode: {self._radius_effective_mode}')
+        print(f'{"=" * 80}')
+        print(f'{"Parameter":<20} {"Value":<12} {"Min":<12} {"Max":<12} {"Vary":<8}')
+        print(f'{"-" * 80}')
 
         for name, info in self.params.items():
-            vary_str = "✓" if info['vary'] else "✗"
+            vary_str = '✓' if info['vary'] else '✗'
             # Show linked indicator for radius_effective in link_radius mode
-            if (name == 'radius_effective' and
-                self._radius_effective_mode == 'link_radius'):
-                vary_str = "→radius"
-            print(f"{name:<20} {info['value']:<12.4g} {info['min']:<12.4g} "
-                  f"{info['max']:<12.4g} {vary_str:<8}")
-        print(f"{'='*80}\n")
+            if name == 'radius_effective' and self._radius_effective_mode == 'link_radius':
+                vary_str = '→radius'
+            print(
+                f'{name:<20} {info["value"]:<12.4g} {info["min"]:<12.4g} '
+                f'{info["max"]:<12.4g} {vary_str:<8}'
+            )
+        print(f'{"=" * 80}\n')
 
-    def set_param(self, name: str, value: Optional[float] = None,
-                  min: Optional[float] = None, max: Optional[float] = None,
-                  vary: Optional[bool] = None) -> None:
+    def set_param(
+        self,
+        name: str,
+        value: Optional[float] = None,
+        min: Optional[float] = None,
+        max: Optional[float] = None,
+        vary: Optional[bool] = None,
+    ) -> None:
         """
         Configure a model parameter for fitting.
 
@@ -206,9 +213,11 @@ class SANSFitter:
         if value is not None:
             self.params[name]['value'] = value
             # Sync radius_effective when radius is updated in link_radius mode
-            if (name == 'radius' and
-                self._radius_effective_mode == 'link_radius' and
-                'radius_effective' in self.params):
+            if (
+                name == 'radius'
+                and self._radius_effective_mode == 'link_radius'
+                and 'radius_effective' in self.params
+            ):
                 self.params['radius_effective']['value'] = value
         if min is not None:
             self.params[name]['min'] = min
@@ -217,8 +226,9 @@ class SANSFitter:
         if vary is not None:
             self.params[name]['vary'] = vary
 
-    def set_structure_factor(self, structure_factor_name: str,
-                              radius_effective_mode: str = 'unconstrained') -> None:
+    def set_structure_factor(
+        self, structure_factor_name: str, radius_effective_mode: str = 'unconstrained'
+    ) -> None:
         """
         Apply a structure factor to the current model.
 
@@ -241,14 +251,14 @@ class SANSFitter:
             ValueError: If no form factor model is set, or if the structure factor is invalid
         """
         if self.kernel is None or self.model_name is None:
-            raise ValueError("No form factor model loaded. Use set_model() first.")
+            raise ValueError('No form factor model loaded. Use set_model() first.')
 
         # Validate structure factor name
         supported_sf = ['hardsphere', 'hayter_msa', 'squarewell', 'stickyhardsphere']
         if structure_factor_name not in supported_sf:
             raise ValueError(
                 f"Unsupported structure factor '{structure_factor_name}'. "
-                f"Supported: {', '.join(supported_sf)}"
+                f'Supported: {", ".join(supported_sf)}'
             )
 
         # Validate radius_effective_mode
@@ -263,7 +273,7 @@ class SANSFitter:
             self._form_factor_params = {k: dict(v) for k, v in self.params.items()}
 
         # Create product model name
-        full_model_name = f"{self.model_name}@{structure_factor_name}"
+        full_model_name = f'{self.model_name}@{structure_factor_name}'
 
         try:
             # Load the product model
@@ -283,7 +293,7 @@ class SANSFitter:
                         'min': param.limits[0] if param.limits[0] > -np.inf else 0,
                         'max': param.limits[1] if param.limits[1] < np.inf else param.default * 10,
                         'vary': False,
-                        'description': param.description
+                        'description': param.description,
                     }
 
             # Ensure scale and background are present
@@ -296,7 +306,7 @@ class SANSFitter:
                         'min': 0.0,
                         'max': np.inf,
                         'vary': False,
-                        'description': 'Scale factor for the model intensity'
+                        'description': 'Scale factor for the model intensity',
                     }
 
             if 'background' not in new_params:
@@ -308,7 +318,7 @@ class SANSFitter:
                         'min': 0.0,
                         'max': np.inf,
                         'vary': False,
-                        'description': 'Constant background level'
+                        'description': 'Constant background level',
                     }
 
             self.params = new_params
@@ -322,17 +332,18 @@ class SANSFitter:
                     print("  Note: 'radius_effective' linked to 'radius' value")
                 else:
                     warnings.warn(
-                        "Cannot link radius_effective to radius: one or both parameters not found. "
-                        "Using unconstrained mode.", stacklevel=2
+                        'Cannot link radius_effective to radius: one or both parameters not found. '
+                        'Using unconstrained mode.',
+                        stacklevel=2,
                     )
                     self._radius_effective_mode = 'unconstrained'
 
             print(f"✓ Structure factor '{structure_factor_name}' applied to '{self.model_name}'")
-            print(f"  Product model: {full_model_name}")
-            print(f"  Total parameters: {len(self.params)}")
+            print(f'  Product model: {full_model_name}')
+            print(f'  Total parameters: {len(self.params)}')
 
         except Exception as e:
-            raise ValueError(f"Failed to load model '{full_model_name}': {str(e)}")  from e
+            raise ValueError(f"Failed to load model '{full_model_name}': {str(e)}") from e
 
     def remove_structure_factor(self) -> None:
         """
@@ -342,7 +353,7 @@ class SANSFitter:
             ValueError: If no structure factor is currently set
         """
         if self._structure_factor_name is None:
-            raise ValueError("No structure factor is currently set.")
+            raise ValueError('No structure factor is currently set.')
 
         # Reload the original form factor model
         try:
@@ -357,10 +368,10 @@ class SANSFitter:
             self._form_factor_params = {}
 
             print(f"✓ Structure factor '{sf_name}' removed")
-            print(f"  Reverted to form factor: {self.model_name}")
+            print(f'  Reverted to form factor: {self.model_name}')
 
         except Exception as e:
-            raise ValueError(f"Failed to reload form factor model: {str(e)}") from e
+            raise ValueError(f'Failed to reload form factor model: {str(e)}') from e
 
     def get_structure_factor(self) -> Optional[str]:
         """
@@ -371,8 +382,9 @@ class SANSFitter:
         """
         return self._structure_factor_name
 
-    def fit(self, engine: Literal['bumps', 'lmfit'] = 'bumps',
-            method: Optional[str] = None, **kwargs) -> dict[str, Any]:
+    def fit(
+        self, engine: Literal['bumps', 'lmfit'] = 'bumps', method: Optional[str] = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Perform the fit using the specified engine.
 
@@ -390,9 +402,9 @@ class SANSFitter:
             ValueError: If data or model not loaded, or invalid engine
         """
         if self.data is None:
-            raise ValueError("No data loaded. Use load_data() first.")
+            raise ValueError('No data loaded. Use load_data() first.')
         if self.kernel is None:
-            raise ValueError("No model loaded. Use set_model() first.")
+            raise ValueError('No model loaded. Use set_model() first.')
 
         if engine == 'bumps':
             return self._fit_bumps(method or 'amoeba', **kwargs)
@@ -418,8 +430,11 @@ class SANSFitter:
                 param_obj.range(info['min'], info['max'])
 
         # Handle radius_effective linking in link_radius mode
-        if (self._radius_effective_mode == 'link_radius' and
-            hasattr(model, 'radius_effective') and hasattr(model, 'radius')):
+        if (
+            self._radius_effective_mode == 'link_radius'
+            and hasattr(model, 'radius_effective')
+            and hasattr(model, 'radius')
+        ):
             # Constrain radius_effective to equal radius
             model.radius_effective = model.radius
 
@@ -427,8 +442,8 @@ class SANSFitter:
         experiment = Experiment(data=self.data, model=model)
         problem = FitProblem(experiment)
 
-        print(f"\nInitial χ² = {problem.chisq():.4f}")
-        print(f"Fitting with BUMPS (method: {method})...")
+        print(f'\nInitial χ² = {problem.chisq():.4f}')
+        print(f'Fitting with BUMPS (method: {method})...')
 
         # Perform fit
         result = bumps_fit(problem, method=method, **kwargs)
@@ -440,7 +455,7 @@ class SANSFitter:
             'chisq': problem.chisq(),
             'parameters': {},
             'problem': problem,
-            'result': result
+            'result': result,
         }
 
         # Extract fitted parameters
@@ -448,7 +463,7 @@ class SANSFitter:
             self.fit_result['parameters'][k] = {
                 'value': v,
                 'stderr': dv,
-                'formatted': format_uncertainty(v, dv)
+                'formatted': format_uncertainty(v, dv),
             }
             # Update internal parameter values
             if k in self.params:
@@ -457,11 +472,11 @@ class SANSFitter:
         self._fitted_model = problem
 
         # Print results
-        print("\n✓ Fit completed!")
-        print(f"Final χ² = {self.fit_result['chisq']:.4f}")
-        print("\nFitted parameters:")
+        print('\n✓ Fit completed!')
+        print(f'Final χ² = {self.fit_result["chisq"]:.4f}')
+        print('\nFitted parameters:')
         for name, info in self.fit_result['parameters'].items():
-            print(f"  {name}: {info['formatted']}")
+            print(f'  {name}: {info["formatted"]}')
 
         return self.fit_result
 
@@ -488,8 +503,11 @@ class SANSFitter:
                 par_dict[name] = x[i]
 
             # Handle radius_effective linking in link_radius mode
-            if (radius_effective_mode == 'link_radius' and
-                'radius' in par_dict and 'radius_effective' in par_dict):
+            if (
+                radius_effective_mode == 'link_radius'
+                and 'radius' in par_dict
+                and 'radius_effective' in par_dict
+            ):
                 par_dict['radius_effective'] = par_dict['radius']
 
             # Calculate model
@@ -497,7 +515,7 @@ class SANSFitter:
             # Return weighted residuals
             return (self.data.y - I_calc) / self.data.dy
 
-        print(f"\nFitting with scipy.optimize (method: {method})...")
+        print(f'\nFitting with scipy.optimize (method: {method})...')
 
         # Perform fit based on method
         if method == 'leastsq':
@@ -532,7 +550,7 @@ class SANSFitter:
             except Exception as e:
                 # If Jacobian-based covariance estimation fails, fall back to zeros
                 # and emit a warning so users can investigate the cause.
-                warnings.warn(f"Failed to compute covariance from Jacobian: {e}", stacklevel=2)
+                warnings.warn(f'Failed to compute covariance from Jacobian: {e}', stacklevel=2)
                 param_errors = np.zeros_like(fitted_params)
 
             chisq = np.sum(result.fun**2)
@@ -542,7 +560,7 @@ class SANSFitter:
             bounds_list = list(zip(bounds_lower, bounds_upper))
 
             def objective(x):
-                return np.sum(residual(x)**2)
+                return np.sum(residual(x) ** 2)
 
             result = differential_evolution(objective, bounds_list, **kwargs)
             fitted_params = result.x
@@ -550,7 +568,9 @@ class SANSFitter:
             chisq = result.fun
 
         else:
-            raise ValueError(f"Unknown method '{method}'. Use 'leastsq', 'least_squares', or 'differential_evolution'.")
+            raise ValueError(
+                f"Unknown method '{method}'. Use 'leastsq', 'least_squares', or 'differential_evolution'."
+            )
 
         # Store results
         self.fit_result = {
@@ -558,7 +578,7 @@ class SANSFitter:
             'method': method,
             'chisq': chisq,
             'parameters': {},
-            'result': result
+            'result': result,
         }
 
         # Extract fitted parameters
@@ -566,7 +586,9 @@ class SANSFitter:
             self.fit_result['parameters'][name] = {
                 'value': fitted_params[i],
                 'stderr': param_errors[i],
-                'formatted': f"{fitted_params[i]:.6g} ± {param_errors[i]:.6g}" if param_errors[i] > 0 else f"{fitted_params[i]:.6g}"
+                'formatted': f'{fitted_params[i]:.6g} ± {param_errors[i]:.6g}'
+                if param_errors[i] > 0
+                else f'{fitted_params[i]:.6g}',
             }
             # Update internal parameter values
             self.params[name]['value'] = fitted_params[i]
@@ -577,17 +599,17 @@ class SANSFitter:
                 self.fit_result['parameters'][name] = {
                     'value': info['value'],
                     'stderr': 0.0,
-                    'formatted': f"{info['value']:.6g} (fixed)"
+                    'formatted': f'{info["value"]:.6g} (fixed)',
                 }
 
         self._fitted_model = result
 
         # Print results
-        print("\n✓ Fit completed!")
-        print(f"Final χ² = {self.fit_result['chisq']:.4f}")
-        print("\nFitted parameters:")
+        print('\n✓ Fit completed!')
+        print(f'Final χ² = {self.fit_result["chisq"]:.4f}')
+        print('\nFitted parameters:')
         for name, info in self.fit_result['parameters'].items():
-            print(f"  {name}: {info['formatted']}")
+            print(f'  {name}: {info["formatted"]}')
 
         return self.fit_result
 
@@ -600,13 +622,14 @@ class SANSFitter:
             log_scale: If True, use log scale for both axes
         """
         if self.data is None:
-            raise ValueError("No data to plot. Use load_data() first.")
+            raise ValueError('No data to plot. Use load_data() first.')
 
         if self.fit_result is None:
-            print("No fit results available. Plotting data only.")
+            print('No fit results available. Plotting data only.')
             plt.figure(figsize=(10, 6))
-            plt.errorbar(self.data.x, self.data.y, yerr=self.data.dy,
-                        fmt='o', label='Data', alpha=0.6)
+            plt.errorbar(
+                self.data.x, self.data.y, yerr=self.data.dy, fmt='o', label='Data', alpha=0.6
+            )
             plt.xlabel('Q (Å⁻¹)')
             plt.ylabel('I(Q)')
             plt.title('SANS Data')
@@ -634,19 +657,28 @@ class SANSFitter:
 
         # Create plot
         if show_residuals:
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10),
-                                          gridspec_kw={'height_ratios': [3, 1]})
+            fig, (ax1, ax2) = plt.subplots(
+                2, 1, figsize=(10, 10), gridspec_kw={'height_ratios': [3, 1]}
+            )
         else:
             fig, ax1 = plt.subplots(1, 1, figsize=(10, 6))
 
         # Main plot
-        ax1.errorbar(self.data.x, self.data.y, yerr=self.data.dy,
-                    fmt='o', label='Experimental Data', alpha=0.6, markersize=4)
+        ax1.errorbar(
+            self.data.x,
+            self.data.y,
+            yerr=self.data.dy,
+            fmt='o',
+            label='Experimental Data',
+            alpha=0.6,
+            markersize=4,
+        )
         ax1.plot(q, I_fit, 'r-', label='Fitted Model', linewidth=2)
         ax1.set_xlabel('Q (Å⁻¹)', fontsize=12)
         ax1.set_ylabel('I(Q)', fontsize=12)
-        ax1.set_title(f'SANS Fit: {self.model_name} (χ² = {self.fit_result["chisq"]:.4f})',
-                     fontsize=14)
+        ax1.set_title(
+            f'SANS Fit: {self.model_name} (χ² = {self.fit_result["chisq"]:.4f})', fontsize=14
+        )
         ax1.legend()
         ax1.grid(True, alpha=0.3)
 
@@ -675,34 +707,37 @@ class SANSFitter:
             filename: Output file path (CSV format)
         """
         if self.fit_result is None:
-            raise ValueError("No fit results to save. Run fit() first.")
+            raise ValueError('No fit results to save. Run fit() first.')
 
         # Prepare data
         with open(filename, 'w') as f:
-            f.write("# SANS Fit Results\n")
-            f.write(f"# Model: {self.model_name}\n")
-            f.write(f"# Engine: {self.fit_result['engine']}\n")
-            f.write(f"# Method: {self.fit_result['method']}\n")
-            f.write(f"# Chi-squared: {self.fit_result['chisq']:.6f}\n")
-            f.write("#\n")
-            f.write("# Fitted Parameters:\n")
+            f.write('# SANS Fit Results\n')
+            f.write(f'# Model: {self.model_name}\n')
+            f.write(f'# Engine: {self.fit_result["engine"]}\n')
+            f.write(f'# Method: {self.fit_result["method"]}\n')
+            f.write(f'# Chi-squared: {self.fit_result["chisq"]:.6f}\n')
+            f.write('#\n')
+            f.write('# Fitted Parameters:\n')
             for name, info in self.fit_result['parameters'].items():
-                f.write(f"# {name}: {info['formatted']}\n")
-            f.write("#\n")
-            f.write("Q,I_exp,dI_exp,I_fit,Residuals\n")
+                f.write(f'# {name}: {info["formatted"]}\n')
+            f.write('#\n')
+            f.write('Q,I_exp,dI_exp,I_fit,Residuals\n')
 
             # Get fitted curve
             if self.fit_result['engine'] == 'bumps':
                 I_fit = self._fitted_model.fitness.theory()
             else:
                 calculator = DirectModel(self.data, self.kernel)
-                par_dict = {name: info['value'] for name, info in self.fit_result['parameters'].items()}
+                par_dict = {
+                    name: info['value'] for name, info in self.fit_result['parameters'].items()
+                }
                 I_fit = calculator(**par_dict)
 
             residuals = (self.data.y - I_fit) / self.data.dy
 
-            for q, i_exp, di_exp, i_fit, res in zip(self.data.x, self.data.y,
-                                                      self.data.dy, I_fit, residuals):
-                f.write(f"{q:.6e},{i_exp:.6e},{di_exp:.6e},{i_fit:.6e},{res:.6e}\n")
+            for q, i_exp, di_exp, i_fit, res in zip(
+                self.data.x, self.data.y, self.data.dy, I_fit, residuals
+            ):
+                f.write(f'{q:.6e},{i_exp:.6e},{di_exp:.6e},{i_fit:.6e},{res:.6e}\n')
 
-        print(f"✓ Results saved to {filename}")
+        print(f'✓ Results saved to {filename}')
