@@ -1,6 +1,7 @@
 # SANS Model Fitter
 
 [![Tests](https://github.com/rozyczko/SANS-fitter/actions/workflows/tests.yml/badge.svg)](https://github.com/rozyczko/SANS-fitter/actions/workflows/tests.yml)
+[![Docs](https://github.com/rozyczko/SANS-fitter/actions/workflows/docs.yml/badge.svg)](https://rozyczko.github.io/SANS-fitter/)
 [![codecov](https://codecov.io/gh/rozyczko/SANS-fitter/graph/badge.svg)](https://codecov.io/gh/rozyczko/SANS-fitter)
 
 A flexible, model-agnostic Python template for fitting Small-Angle Neutron Scattering (SANS) data using the SasModels library.
