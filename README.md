@@ -157,16 +157,6 @@ result = fitter.fit(engine='lmfit', method='leastsq')
 
 See [sans_fitter_demo.ipynb](sans_fitter_demo.ipynb) for a comprehensive demonstration with examples.
 
-## File Structure
-
-```
-.
-├── sans_fitter.py           # Main SANSFitter class
-├── sans_fitter_demo.ipynb   # Demonstration notebook
-├── sasmodels-basic.ipynb    # Original experimental notebook
-├── simulated_sans_data.csv  # Example data file
-└── README.md                # This file
-```
 
 ## Design Philosophy
 
