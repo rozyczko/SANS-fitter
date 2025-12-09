@@ -7978,7 +7978,7 @@ packages:
 - pypi: ./
   name: sans-fitter
   version: 0.1.0
-  sha256: ae5a88e8484f0e9a01a899af77a06ab39a4488486bc1517bb552335acde40e18
+  sha256: 5fdbd7c08df42b9d516177570dda714c02c87e9b2ccb5e2b910b3a9b7e512df4
   requires_dist:
   - numpy>=1.20
   - matplotlib>=3.5
