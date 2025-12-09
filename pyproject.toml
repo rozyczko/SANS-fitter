@@ -47,13 +47,42 @@ bumps = ">=0.9"
 pytest = ">=7.0"
 pytest-cov = ">=4.0"
 jupyter = ">=1.0"
+ruff = ">=0.8.0"
 
 [tool.pixi.tasks]
 test = "pytest tests/ -v"
 test-verbose = "pytest tests/ -vv"
 test-coverage = "pytest tests/ --cov=. --cov-report=html --cov-report=term --cov-report=xml"
 test-quick = "pytest tests/ -v -x"
+lint = "ruff check src/ tests/ --fix"
+lint-check = "ruff check src/ tests/"
+format = "ruff format src/ tests/"
+format-check = "ruff format --check src/ tests/"
 run-demo = "jupyter notebook notebooks/sans_fitter_demo.ipynb"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "W191",  # indentation contains tabs
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
+"tests/*" = ["F401", "F811"]  # allow unused imports and redefinitions in tests
 
 [tool.pytest.ini_options]
 # Pytest configuration for SANS Fitter tests
