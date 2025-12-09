@@ -383,7 +383,10 @@ class SANSFitter:
         return self._structure_factor_name
 
     def fit(
-        self, engine: Literal['bumps', 'lmfit'] = 'bumps', method: Optional[str] = None, **kwargs
+        self,
+        engine: Literal['bumps', 'lmfit'] = 'bumps',
+        method: Optional[str] = None,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Perform the fit using the specified engine.
@@ -415,7 +418,7 @@ class SANSFitter:
         else:
             raise ValueError(f"Unknown engine '{engine}'. Use 'bumps' or 'lmfit'.")
 
-    def _fit_bumps(self, method: str = 'amoeba', **kwargs) -> dict[str, Any]:
+    def _fit_bumps(self, method: str = 'amoeba', **kwargs: Any) -> dict[str, Any]:
         """Fit using BUMPS engine."""
         # Prepare parameter dictionary for BumpsModel
         pars = {name: info['value'] for name, info in self.params.items()}
@@ -480,7 +483,7 @@ class SANSFitter:
 
         return self.fit_result
 
-    def _fit_lmfit(self, method: str = 'leastsq', **kwargs) -> dict[str, Any]:
+    def _fit_lmfit(self, method: str = 'leastsq', **kwargs: Any) -> dict[str, Any]:
         """Fit using scipy.optimize (leastsq/least_squares) engine."""
         # Get initial parameter values and build bounds
         param_names = [name for name, info in self.params.items() if info['vary']]
