@@ -6,16 +6,16 @@ Features include data upload, model selection (manual and AI-assisted), paramete
 and interactive visualization.
 """
 
-import io
 import os
 import tempfile
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from sasmodels import core
+from sasmodels.direct_model import call_kernel
 
 from sans_fitter import SANSFitter
 
@@ -570,8 +570,6 @@ def main():
                 # Plot data with fit
                 try:
                     # Generate fitted curve
-                    from sasmodels.direct_model import call_kernel
-
                     q_plot = np.logspace(
                         np.log10(fitter.data.x.min()),
                         np.log10(fitter.data.x.max()),
