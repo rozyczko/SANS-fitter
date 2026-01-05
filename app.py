@@ -15,9 +15,29 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from sasmodels import core
-from sasmodels.direct_model import call_kernel
+from sasmodels.direct_model import DirectModel
 
 from sans_fitter import SANSFitter
+
+# Maximum value that Streamlit's number_input can handle
+MAX_FLOAT_DISPLAY = 1e300
+MIN_FLOAT_DISPLAY = -1e300
+
+
+def clamp_for_display(value: float) -> float:
+    """
+    Clamp a value to a range that Streamlit's number_input can handle.
+    Converts inf/-inf to displayable bounds.
+    
+    Args:
+        value: The value to clamp
+        
+    Returns:
+        The clamped value
+    """
+    if np.isinf(value):
+        return MAX_FLOAT_DISPLAY if value > 0 else MIN_FLOAT_DISPLAY
+    return value
 
 
 def get_all_models() -> List[str]:
@@ -337,7 +357,7 @@ def main():
     with col1:
         # Plot data
         fig = plot_data_and_fit(st.session_state.fitter, show_fit=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with col2:
         st.markdown('**Data Statistics**')
@@ -447,7 +467,7 @@ def main():
             with cols[1]:
                 value = st.number_input(
                     'Value',
-                    value=float(param_info['value']),
+                    value=clamp_for_display(float(param_info['value'])),
                     format='%g',
                     key=f'value_{param_name}',
                     label_visibility='collapsed',
@@ -457,7 +477,7 @@ def main():
             with cols[2]:
                 min_val = st.number_input(
                     'Min',
-                    value=float(param_info['min']),
+                    value=clamp_for_display(float(param_info['min'])),
                     format='%g',
                     key=f'min_{param_name}',
                     label_visibility='collapsed',
@@ -467,7 +487,7 @@ def main():
             with cols[3]:
                 max_val = st.number_input(
                     'Max',
-                    value=float(param_info['max']),
+                    value=clamp_for_display(float(param_info['max'])),
                     format='%g',
                     key=f'max_{param_name}',
                     label_visibility='collapsed',
@@ -569,22 +589,19 @@ def main():
             with col1:
                 # Plot data with fit
                 try:
-                    # Generate fitted curve
-                    q_plot = np.logspace(
-                        np.log10(fitter.data.x.min()),
-                        np.log10(fitter.data.x.max()),
-                        500,
-                    )
-
                     # Get current parameter values
                     param_values = {name: info['value'] for name, info in fitter.params.items()}
 
-                    # Calculate model
-                    fit_i = call_kernel(fitter.kernel, q_plot, **param_values)
+                    # Calculate model using DirectModel (uses data's Q values)
+                    calculator = DirectModel(fitter.data, fitter.kernel)
+                    fit_i = calculator(**param_values)
+
+                    # Use data's Q values for the fitted curve
+                    q_plot = fitter.data.x
 
                     # Plot
                     fig = plot_data_and_fit(fitter, show_fit=True, fit_q=q_plot, fit_i=fit_i)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                 except Exception as e:
                     st.error(f'Error plotting results: {str(e)}')
@@ -600,7 +617,7 @@ def main():
 
                 if fitted_params:
                     df_fitted = pd.DataFrame(fitted_params)
-                    st.dataframe(df_fitted, hide_index=True, use_container_width=True)
+                    st.dataframe(df_fitted, hide_index=True, width='stretch')
                 else:
                     st.info('No parameters were fitted')
 
