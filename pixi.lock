@@ -7978,7 +7978,7 @@ packages:
 - pypi: ./
   name: sans-fitter
   version: 0.1.0
-  sha256: 5fdbd7c08df42b9d516177570dda714c02c87e9b2ccb5e2b910b3a9b7e512df4
+  sha256: c35943505acebf756f7399437d9646c67041325fbaa184b553098cbf6e21168b
   requires_dist:
   - numpy>=1.20
   - matplotlib>=3.5
@@ -7988,7 +7988,10 @@ packages:
   - bumps>=0.9
   - pytest>=7.0 ; extra == 'dev'
   - pytest-cov>=4.0 ; extra == 'dev'
-  requires_python: '>=3.9'
+  - mkdocs>=1.5 ; extra == 'docs'
+  - mkdocs-material>=9.5 ; extra == 'docs'
+  - mkdocstrings[python]>=0.25 ; extra == 'docs'
+  requires_python: '>=3.10'
   editable: true
 - pypi: https://files.pythonhosted.org/packages/cc/0b/8a98ee6196ccf99add9521ce9572092580d609c3b93a5464cc06825f62dd/sasdata-0.11.0-py3-none-any.whl
   name: sasdata

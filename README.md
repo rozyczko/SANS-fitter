@@ -1,6 +1,7 @@
 # SANS Model Fitter
 
 [![Tests](https://github.com/rozyczko/SANS-fitter/actions/workflows/tests.yml/badge.svg)](https://github.com/rozyczko/SANS-fitter/actions/workflows/tests.yml)
+[![Docs](https://github.com/rozyczko/SANS-fitter/actions/workflows/docs.yml/badge.svg)](https://rozyczko.github.io/SANS-fitter/)
 [![codecov](https://codecov.io/gh/rozyczko/SANS-fitter/graph/badge.svg)](https://codecov.io/gh/rozyczko/SANS-fitter)
 
 A flexible, model-agnostic Python template for fitting Small-Angle Neutron Scattering (SANS) data using the SasModels library.
@@ -106,6 +107,28 @@ result = fitter.fit(engine='bumps', method='amoeba')
 result = fitter.fit(engine='lmfit', method='leastsq')
 ```
 
+## Working with Structure Factors
+
+Combine any SasModels form factor with an interaction model to capture correlated systems.
+
+```python
+fitter.set_model('sphere')
+
+# Apply a structure factor (creates sphere@hardsphere product model)
+fitter.set_structure_factor('hardsphere', radius_effective_mode='link_radius')
+
+# Inspect linked parameters and run the fit as usual
+fitter.get_params()
+result = fitter.fit()
+
+# Remove the structure factor to go back to the pure form factor
+fitter.remove_structure_factor()
+```
+
+- **Supported structure factors:** `hardsphere`, `hayter_msa`, `squarewell`, `stickyhardsphere`.
+- **Radius handling:** use `radius_effective_mode='link_radius'` to keep `radius_effective` equal to the form-factor `radius`, or leave the default `unconstrained` to fit it independently.
+- **State helpers:** `get_structure_factor()` returns the active structure factor so notebooks/scripts can branch as needed.
+
 ### Available Methods
 
 **BUMPS methods:**
@@ -120,53 +143,10 @@ result = fitter.fit(engine='lmfit', method='leastsq')
 - `'differential_evolution'` - Global optimizer
 - `'powell'`, `'nelder'`, etc.
 
-## Class Reference
-
-### `SANSFitter`
-
-#### Methods
-
-**`load_data(filename: str)`**
-- Load SANS data from file (CSV, XML, HDF5)
-
-**`set_model(model_name: str, platform: str = 'cpu')`**
-- Load a model from SasModels library
-- Examples: 'cylinder', 'sphere', 'core_shell_sphere', 'ellipsoid'
-
-**`get_params()`**
-- Display current parameter values and settings
-
-**`set_param(name, value=None, min=None, max=None, vary=None)`**
-- Configure a model parameter
-- `name`: Parameter name
-- `value`: Initial value
-- `min`, `max`: Bounds for fitting
-- `vary`: Boolean, whether to fit this parameter
-
-**`fit(engine='bumps', method=None, **kwargs)`**
-- Perform the fit
-- Returns dictionary with chi-squared and fitted parameters
-
-**`plot_results(show_residuals=True, log_scale=True)`**
-- Visualize experimental data vs fitted model
-
-**`save_results(filename: str)`**
-- Export fit results to CSV file
-
 ## Demo Notebook
 
 See [sans_fitter_demo.ipynb](sans_fitter_demo.ipynb) for a comprehensive demonstration with examples.
 
-## File Structure
-
-```
-.
-├── sans_fitter.py           # Main SANSFitter class
-├── sans_fitter_demo.ipynb   # Demonstration notebook
-├── sasmodels-basic.ipynb    # Original experimental notebook
-├── simulated_sans_data.csv  # Example data file
-└── README.md                # This file
-```
 
 ## Design Philosophy
 
@@ -197,40 +177,90 @@ Parameters are stored internally with:
 
 This allows the fitter to work with any model without prior knowledge of its parameters.
 
+## Web Application
+
+A Streamlit-based web application is now available for interactive SANS data analysis with a user-friendly interface!
+
+### Features
+
+- 📤 **Data Upload**: Upload your SANS datasets (CSV or .dat files)
+- 🤖 **AI-Assisted Model Selection**: Get intelligent model suggestions based on your data
+- 🎯 **Manual Model Selection**: Choose from all available SasModels
+- ⚙️ **Interactive Parameter Tuning**: Adjust parameters with real-time UI controls
+- 📊 **Interactive Plots**: Visualize data and fits with Plotly's zoom, pan, and export features
+- 💾 **Export Results**: Save fitted parameters and curves to CSV
+
+### Quick Start (Web App)
+
+```bash
+# Install web application dependencies
+pip install -r requirements.txt
+
+# Run the Streamlit app
+streamlit run app.py
+```
+
+The app will open in your browser at `http://localhost:8501`.
+
+### Using the Web Application
+
+1. **Upload Data**: Use the sidebar to upload your SANS data file (CSV or .dat format with Q, I, dI columns) or load the example dataset
+2. **Select Model**: 
+   - **Manual**: Choose from dropdown of all SasModels models
+   - **AI-Assisted**: Optionally provide an Anthropic API key for AI-powered suggestions, or use built-in heuristics
+3. **Configure Parameters**: Set initial values, bounds, and which parameters to fit
+4. **Run Fit**: Choose optimization engine (BUMPS or LMFit) and method, then click "Run Fit"
+5. **View Results**: Interactive plots show data with error bars and fitted curve
+6. **Export**: Download fitted parameters as CSV
+
+### Web App Deployment
+
+#### Streamlit Cloud
+
+1. Push this repository to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub account and deploy from the repository
+4. Set `app.py` as the main file
+
+#### Heroku
+
+```bash
+# Create Procfile
+echo "web: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0" > Procfile
+
+# Deploy
+heroku create your-app-name
+git push heroku main
+```
+
+#### Docker
+
+```bash
+# Build image
+docker build -t sans-fitter-app .
+
+# Run container
+docker run -p 8501:8501 sans-fitter-app
+```
+
+### API Integration
+
+The web app supports optional AI-powered model suggestions via the Anthropic API:
+
+1. Get an API key from [console.anthropic.com](https://console.anthropic.com)
+2. Enter the key in the sidebar when using AI-Assisted mode
+3. Or set as environment variable: `export ANTHROPIC_API_KEY=your-key-here`
+
+**Note**: The app also works without an API key using built-in heuristic suggestions.
+
 ## License
 
-BSD 3-Clause License
-
-Copyright (c) 2025, SANS-fitter contributors
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+BSD 3-Clause License. See [LICENSE](LICENSE) for the full text.
 
 ## References
 
 - SasModels: https://github.com/SasView/sasmodels
 - BUMPS: https://github.com/bumps/bumps
 - LMFit: https://lmfit.github.io/lmfit-py/
+- Streamlit: https://streamlit.io
+- Plotly: https://plotly.com/python/
