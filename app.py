@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from sasmodels import modelinfo
+from sasmodels import core
 
 from sans_fitter import SANSFitter
 
@@ -28,7 +28,7 @@ def get_all_models() -> List[str]:
         List of model names
     """
     try:
-        all_models = list(modelinfo.all_model_info().keys())
+        all_models = core.list_models()
         return sorted(all_models)
     except Exception as e:
         st.error(f'Error fetching models: {str(e)}')
